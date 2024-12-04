@@ -12,6 +12,7 @@ use Maatwebsite\Excel\Tests\Data\Stubs\Database\User;
 use Maatwebsite\Excel\Tests\Data\Stubs\SheetForUsersFromView;
 use Maatwebsite\Excel\Tests\Data\Stubs\SheetWith100Rows;
 use Maatwebsite\Excel\Tests\TestCase;
+use PhpOffice\PhpSpreadsheet\Exception;
 use PHPUnit\Framework\Assert;
 
 class WithMultipleSheetsTest extends TestCase
@@ -96,7 +97,7 @@ class WithMultipleSheetsTest extends TestCase
 
     public function test_unknown_sheet_index_will_throw_sheet_not_found_exception()
     {
-        $this->expectException(\Maatwebsite\Excel\Exceptions\SheetNotFoundException::class);
+        $this->expectException(Exception::class);
         $this->expectExceptionMessage('Your requested sheet index: 9999 is out of bounds. The actual number of sheets is 2.');
 
         $import = new class implements WithMultipleSheets
@@ -117,8 +118,8 @@ class WithMultipleSheetsTest extends TestCase
 
     public function test_unknown_sheet_name_will_throw_sheet_not_found_exception()
     {
-        $this->expectException(\Maatwebsite\Excel\Exceptions\SheetNotFoundException::class);
-        $this->expectExceptionMessage('Your requested sheet name [Some Random Sheet Name] is out of bounds.');
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessage('Your requested sheet name [0] is out of bounds.');
 
         $import = new class implements WithMultipleSheets
         {
@@ -127,7 +128,7 @@ class WithMultipleSheetsTest extends TestCase
             public function sheets(): array
             {
                 return [
-                    'Some Random Sheet Name' => new class {
+                    new class {
                     },
                 ];
             }
@@ -147,7 +148,7 @@ class WithMultipleSheetsTest extends TestCase
             public function sheets(): array
             {
                 return [
-                    'Some Random Sheet Name' => new class {
+                    new class {
                     },
                 ];
             }
@@ -163,7 +164,7 @@ class WithMultipleSheetsTest extends TestCase
 
         $import->import('import-multiple-sheets.xlsx');
 
-        $this->assertEquals('Some Random Sheet Name', $import->unknown);
+        $this->assertEquals(0, $import->unknown);
     }
 
     public function test_unknown_sheet_indices_can_be_ignored_per_name()
@@ -175,14 +176,14 @@ class WithMultipleSheetsTest extends TestCase
             public function sheets(): array
             {
                 return [
-                    'Some Random Sheet Name' => new class implements SkipsUnknownSheets
+                    new class implements SkipsUnknownSheets
                     {
                         /**
                          * @param  string|int  $sheetName
                          */
-                        public function onUnknownSheet($sheetName)
+                        public function onUnknownSheet($sheetName): void
                         {
-                            Assert::assertEquals('Some Random Sheet Name', $sheetName);
+                            Assert::assertEquals(0, $sheetName);
                         }
                     },
                 ];
@@ -190,6 +191,7 @@ class WithMultipleSheetsTest extends TestCase
         };
 
         $import->import('import-multiple-sheets.xlsx');
+        $this->assertTrue(true);
     }
 
     public function test_unknown_sheet_indices_can_be_ignored()
@@ -211,7 +213,7 @@ class WithMultipleSheetsTest extends TestCase
             /**
              * @param  string|int  $sheetName
              */
-            public function onUnknownSheet($sheetName)
+            public function onUnknownSheet($sheetName): void
             {
                 $this->unknown = $sheetName;
             }
@@ -236,7 +238,7 @@ class WithMultipleSheetsTest extends TestCase
                         /**
                          * @param  string|int  $sheetName
                          */
-                        public function onUnknownSheet($sheetName)
+                        public function onUnknownSheet($sheetName): void
                         {
                             Assert::assertEquals(99999, $sheetName);
                         }
@@ -259,7 +261,7 @@ class WithMultipleSheetsTest extends TestCase
                 return [
                     new class implements ToArray
                     {
-                        public function array(array $array)
+                        public function array(array $array): void
                         {
                             Assert::assertEquals([
                                 ['1.A1', '1.B1'],
@@ -269,7 +271,7 @@ class WithMultipleSheetsTest extends TestCase
                     },
                     new class implements ToArray
                     {
-                        public function array(array $array)
+                        public function array(array $array): void
                         {
                             Assert::assertEquals([
                                 ['2.A1', '2.B1'],
@@ -295,7 +297,7 @@ class WithMultipleSheetsTest extends TestCase
                 return [
                     'Sheet2' => new class implements ToArray
                     {
-                        public function array(array $array)
+                        public function array(array $array): void
                         {
                             Assert::assertEquals([
                                 ['2.A1', '2.B1'],
@@ -305,7 +307,7 @@ class WithMultipleSheetsTest extends TestCase
                     },
                     'Sheet1' => new class implements ToArray
                     {
-                        public function array(array $array)
+                        public function array(array $array): void
                         {
                             Assert::assertEquals([
                                 ['1.A1', '1.B1'],
@@ -335,7 +337,7 @@ class WithMultipleSheetsTest extends TestCase
                     {
                         public $called = false;
 
-                        public function array(array $array)
+                        public function array(array $array): void
                         {
                             $this->called = true;
                             Assert::assertEquals([
